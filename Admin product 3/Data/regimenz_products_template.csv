@@ -1,0 +1,4 @@
+sku,name,category,qty_on_hand,cost_cny,cost_usd,price_usd,price_leone,reorder_threshold,barcode
+PBK-10000,Power Bank 10,000mAh,Accessories,40,70,9.8,14.99,0,10,1234567890123
+SCR-TECNO-S10,Tecno Spark 10 Screen Assembly,Spare Parts,12,125,17.5,29.99,0,5,1234567890456
+EAR-TWS-01,TWS Earbuds,Audio,25,45,6.3,12,0,8,1234567890789

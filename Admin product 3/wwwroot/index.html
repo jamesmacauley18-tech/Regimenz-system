@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Regimenz Electronics Investment — Admin Platform</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7D3AC1">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <img src="assets/logo.svg" alt="Regimenz Electronics Investment logo" class="logo"/>
+    <h1>Regimenz Electronics Investment</h1>
+    <nav>
+      <div class="role-pill"><span id="role_display">Role: Guest</span></div>
+  <button class="tab-btn" data-tab="attendance">Attendance</button>
+  <button class="tab-btn" data-tab="pos">Product Inventory</button>
+  <button class="tab-btn" data-tab="monitor">Live Monitor</button>
+  <button class="tab-btn" data-tab="reports">Profit & Reports</button>
+  <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="monitor" class="tab">
+      <h2 style="color:#7D3AC1;font-weight:800;">Live Monitor</h2>
+      <div class="card">
+        <h3>Real-Time Activity Feed</h3>
+        <ul id="live_feed" style="max-height:320px;overflow-y:auto;"></ul>
+      </div>
+      <div class="card">
+        <h3>Live Stock & Sales</h3>
+        <table class="table" id="live_products_table">
+          <thead><tr><th>SKU</th><th>Name</th><th>Qty</th><th>Sold</th><th>Last Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <!-- REI Assistant Floating Button -->
+    <button id="rei_btn" title="Open REI Assistant" style="position:fixed;bottom:32px;right:32px;z-index:1000;background:#7D3AC1;color:#fff;border-radius:50%;width:64px;height:64px;box-shadow:0 4px 24px #7d3ac155;font-size:2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;">🤖</button>
+    <!-- REI Modal -->
+    <div id="rei_modal" style="display:none;position:fixed;bottom:0;right:0;left:0;top:0;background:#0008;z-index:2000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:18px;max-width:420px;width:96vw;margin:auto;padding:32px 24px;box-shadow:0 8px 32px #7d3ac133;position:relative;">
+        <button id="rei_close" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;color:#7D3AC1;cursor:pointer;">&times;</button>
+        <h2 style="color:#7D3AC1;font-weight:800;">REI Assistant</h2>
+        <p style="color:#555;">Ask for LCD substitutes, universal LCDs, or product help. Example: <em>"Samsung S24 LCD substitute"</em></p>
+        <input id="rei_query" type="text" placeholder="Type your request..." style="width:100%;padding:12px;margin-bottom:12px;border-radius:8px;border:1px solid #c9b6e7;"/>
+        <button id="rei_ask" style="width:100%;background:#7D3AC1;color:#fff;font-weight:700;padding:12px;border-radius:8px;">Ask REI</button>
+        <div id="rei_results" style="margin-top:18px;"></div>
+      </div>
+    </div>
+    <!-- Drag-and-drop Invoice Upload -->
+    <div id="invoice_drop" style="position:fixed;bottom:112px;right:32px;z-index:900;background:#fff;border:2px dashed #7D3AC1;border-radius:14px;padding:18px 24px;box-shadow:0 2px 12px #7d3ac133;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:220px;">
+      <span style="font-size:1.2rem;color:#7D3AC1;font-weight:700;">Drop Invoice Here</span>
+      <input type="file" id="invoice_file" accept=".csv,.pdf,.xlsx" style="display:none;"/>
+      <button id="invoice_browse" style="background:#7D3AC1;color:#fff;padding:8px 18px;border-radius:8px;font-weight:600;">Browse File</button>
+      <div id="invoice_status" style="font-size:0.95rem;color:#555;"></div>
+    </div>
+
+    <section id="attendance" class="tab active">
+      <h2>Live Staff Attendance</h2>
+      <div class="card">
+        <form id="clockForm">
+          <div class="row">
+            <label>Staff ID</label>
+            <input type="text" id="att_staff_id" placeholder="EMP-001" required>
+          </div>
+          <div class="row">
+            <label>PIN</label>
+            <input type="password" id="att_pin" placeholder="****" required>
+          </div>
+          <div class="row">
+            <label>Action</label>
+            <select id="att_action">
+              <option value="clock_in">Clock In</option>
+              <option value="clock_out">Clock Out</option>
+            </select>
+          </div>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Clock-ins today</h3>
+        <ul id="attendance_list"></ul>
+      </div>
+    </section>
+
+    <section id="pos" class="tab">
+      <h2>Product Inventory & Sales</h2>
+      <div class="card">
+        <div class="row">
+          <label>FX Rate (1 USD → NLe)</label>
+          <input type="number" id="fx_rate" value="25.00" step="0.01"/>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row"><label>Scan/Enter Barcode</label><input type="text" id="barcode_in" placeholder="Scan here..."/><button id="add_barcode">Add</button></div>
+      </div>
+      <div class="card">
+  <h3 style="color:#7D3AC1;font-weight:700;letter-spacing:1px;">Products (NLe)</h3>
+        <table class="table" id="products_table">
+          <thead style="background:#f6f0fa;color:#7D3AC1;">
+            <tr>
+              <th>SKU</th>
+              <th>Name</th>
+              <th>Qty</th>
+              <th>Cost CNY</th>
+              <th>Cost USD</th>
+              <th>Selling Price (USD)</th>
+              <th>Selling Price (NLe)</th>
+              <th>Sell</th>
+              <th>Line Profit</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="card totals">
+        <div><strong>Total Revenue (USD):</strong> <span id="rev_usd">0.00</span></div>
+        <div><strong>Total COGS (USD):</strong> <span id="cogs_usd">0.00</span></div>
+        <div><strong>Total Profit (USD):</strong> <span id="profit_usd">0.00</span></div>
+        <div><strong>Total Profit (NLe):</strong> <span id="profit_leone">0.00</span></div>
+        <button id="save_sale" style="background:#7D3AC1;font-weight:600;">Save Sale</button>
+      </div>
+      <div class="card">
+        <h3>Low-stock Alerts</h3>
+        <ul id="low_stock_list"></ul>
+      </div>
+    </section>
+
+    <section id="reports" class="tab">
+      <h2>Profit Advisor</h2>
+      <div class="card">
+        <ul id="advisor_list"></ul>
+      </div>
+    </section>
+
+    <section id="settings" class="tab">
+      <h2>Data & Import</h2>
+      <div class="card">
+        <p>Use CSV columns: <code>sku,name,category,qty_on_hand,cost_cny,cost_usd,price_usd,price_leone,reorder_threshold,barcode</code></p>
+        <input type="file" id="csv_file" accept=".csv"/>
+        <button id="upload_csv">Upload CSV</button>
+      </div>
+    
+      <div class="card">
+        <h3>Login</h3><p><strong>Option A:</strong> Username & Password (gets a token)</p>
+        <div class="row"><label>Username</label><input type="text" id="login_user" placeholder="admin"/></div>
+        <div class="row"><label>Password</label><input type="password" id="login_pass" placeholder="admin123"/></div>
+        <button id="login_pw_btn">Login</button>
+        <hr/>
+        <p><strong>Option B:</strong> API Key (legacy)</p>
+        <div class="row"><label>Role</label>
+          <select id="role_select">
+            <option value="Admin">Admin</option>
+            <option value="Cashier">Cashier</option>
+            <option value="Technician">Technician</option>
+          </select>
+        </div>
+        <div class="row"><label>API Key</label><input type="text" id="api_key" placeholder="Enter your key"/></div>
+        <button id="login_btn">Save Key</button>
+        <p><small>Default keys (change later in appsettings.json): Admin=<code>ADMIN-KEY-1234</code>, Cashier=<code>CASHIER-KEY-1234</code>, Technician=<code>TECH-KEY-1234</code></small></p>
+      </div>
+
+      <div class="card">
+        <h3>PDF Reports & Alerts</h3>
+        <div class="row"><label>Date (YYYY-MM-DD)</label><input type="date" id="report_date"/></div>
+        <button id="pdf_sales">Download Daily Sales PDF</button>
+        <button id="pdf_att">Download Attendance PDF</button>
+        <button id="pdf_low">Download Low Stock PDF</button> <button id="send_low_email">Email Low-Stock Alert</button>
+      </div>
+
+      <div class="card">
+        <h3>Pricing AI — Suggest Prices</h3>
+        <div class="row"><label>Target Margin %</label><input type="number" id="target_margin" value="25" step="1"/></div>
+        <button id="run_ai">Run Pricing AI</button>
+        <ul id="ai_list"></ul>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <small>© Regimenz Electronics Investment — All rights reserved</small>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // REI Assistant logic
+    const reiBtn = document.getElementById('rei_btn');
+    const reiModal = document.getElementById('rei_modal');
+    const reiClose = document.getElementById('rei_close');
+    const reiAsk = document.getElementById('rei_ask');
+    const reiQuery = document.getElementById('rei_query');
+    const reiResults = document.getElementById('rei_results');
+    reiBtn.onclick = ()=>{ reiModal.style.display='flex'; };
+    reiClose.onclick = ()=>{ reiModal.style.display='none'; reiResults.innerHTML=''; reiQuery.value=''; };
+    reiAsk.onclick = async ()=>{
+      const q = reiQuery.value.trim();
+      if(!q){ reiResults.innerHTML='<span style="color:#c00;">Enter a request.</span>'; return; }
+      reiResults.innerHTML = '<em>Thinking...</em>';
+      // Simulate AI LCD suggestion (replace with real API if available)
+      setTimeout(()=>{
+        if(q.toLowerCase().includes('lcd')){
+          reiResults.innerHTML = `<div style='color:#7D3AC1;font-weight:700;'>Suggested LCDs:</div><ul><li>Universal LCD 6.5" (REI-UNI-65)</li><li>Compatible: Samsung S24 LCD (REI-S24-LCD)</li><li>Substitute: Generic AMOLED 6.8"</li></ul><div style='color:#555;font-size:0.95em;'>Confidence: High. Based on product catalog and heuristics.</div>`;
+        } else {
+          reiResults.innerHTML = `<div style='color:#7D3AC1;'>No LCD found. Try a different query.</div>`;
+        }
+      }, 1200);
+    };
+    // Drag-and-drop Invoice logic
+    const invoiceDrop = document.getElementById('invoice_drop');
+    const invoiceFile = document.getElementById('invoice_file');
+    const invoiceBrowse = document.getElementById('invoice_browse');
+    const invoiceStatus = document.getElementById('invoice_status');
+    invoiceDrop.ondragover = e=>{ e.preventDefault(); invoiceDrop.style.background='#f1edff'; };
+    invoiceDrop.ondragleave = e=>{ e.preventDefault(); invoiceDrop.style.background='#fff'; };
+    invoiceDrop.ondrop = e=>{
+      e.preventDefault(); invoiceDrop.style.background='#fff';
+      const file = e.dataTransfer.files[0];
+      if(file) handleInvoiceFile(file);
+    };
+    invoiceBrowse.onclick = ()=> invoiceFile.click();
+    invoiceFile.onchange = ()=>{
+      if(invoiceFile.files[0]) handleInvoiceFile(invoiceFile.files[0]);
+    };
+    function handleInvoiceFile(file){
+      invoiceStatus.textContent = 'Extracting...';
+      // Simulate AI extraction (replace with real API if available)
+      setTimeout(()=>{
+        invoiceStatus.innerHTML = `<span style='color:#7D3AC1;'>Extracted 5 products from invoice.<br>Ready to add to inventory.</span>`;
+      }, 1500);
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+  </script>
+</body>
+</html>
